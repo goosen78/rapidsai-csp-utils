@@ -71,7 +71,7 @@ install_RAPIDS () {
                 -c rapidsai/label/main -c rapidsai -c nvidia -c conda-forge -c defaults \
                 python=3.6 gdal=3.0.4 cudatoolkit=$CTK_VERSION \
                 cudf=$RAPIDS_VERSION cuml cugraph cuspatial gcsfs pynvml xgboost=1.1.0dev.rapidsai$RAPIDS_VERSION \
-                dask-cudf cusignal configparser jsonpath-ng bqplot ruamel.yaml networkx
+                dask-cudf dask distributed cusignal configparser jsonpath-ng bqplot ruamel.yaml networkx
             conda config --set pip_interop_enabled True
             pip install gquant
         fi
