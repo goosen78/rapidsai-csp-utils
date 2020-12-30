@@ -86,7 +86,7 @@ install_RAPIDS () {
         cp /usr/local/lib/libnccl.so /usr/lib/libnccl.so
         echo "Copying RAPIDS compatible xgboost"	
         cp /usr/local/lib/libxgboost.so /usr/lib/libxgboost.so
-        git clone https://github.com/rapidsai/gQuant.git
+        git clone -b develop https://github.com/rapidsai/gQuant.git
         cd gQuant && bash download_data.sh
     fi
 
