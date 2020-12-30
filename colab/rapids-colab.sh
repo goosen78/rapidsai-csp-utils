@@ -71,9 +71,12 @@ install_RAPIDS () {
                 -c rapidsai/label/main -c rapidsai -c nvidia -c conda-forge -c defaults \
                 python=3.6 gdal=3.0.4 cudatoolkit=$CTK_VERSION \
                 cudf=$RAPIDS_VERSION cuml cugraph cuspatial gcsfs pynvml xgboost=1.1.0dev.rapidsai$RAPIDS_VERSION \
-                dask-cudf dask distributed cusignal configparser jsonpath-ng bqplot ruamel.yaml networkx
+                dask-cudf cusignal configparser jsonpath-ng bqplot python-graphviz ruamel.yaml nodejs ipywidgets
             conda config --set pip_interop_enabled True
+            pip install dask[dataframe] distributed networkx
             pip install gquant
+            pip install gquantlab==0.1.1
+            jupyter lab build
         fi
           
         echo "Copying shared object files to /usr/lib"
@@ -83,6 +86,8 @@ install_RAPIDS () {
         cp /usr/local/lib/libnccl.so /usr/lib/libnccl.so
         echo "Copying RAPIDS compatible xgboost"	
         cp /usr/local/lib/libxgboost.so /usr/lib/libxgboost.so
+        git clone https://github.com/rapidsai/gQuant.git
+        cd gQuant && bash download_data.sh
     fi
 
     echo ""
