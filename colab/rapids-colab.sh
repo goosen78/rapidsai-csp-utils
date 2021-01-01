@@ -26,24 +26,21 @@ install_RAPIDS () {
     echo "Checking for GPU type:"
     python rapidsai-csp-utils/colab/env-check.py
 
-    if [ ! -f Miniconda3-4.5.4-Linux-x86_64.sh ]; then
+    if [ ! -f ac.sh ]; then
         echo "Removing conflicting packages, will replace with RAPIDS compatible versions"
         # remove existing xgboost and dask installs
         pip uninstall -y xgboost dask distributed
 
         # intall miniconda
         echo "Installing conda"
-        wget https://repo.continuum.io/miniconda/Miniconda3-4.5.4-Linux-x86_64.sh
-        chmod +x Miniconda3-4.5.4-Linux-x86_64.sh
-        bash ./Miniconda3-4.5.4-Linux-x86_64.sh -b -f -p /usr/local
-
-        #pin python3.6
-        echo "python 3.6.*" > /usr/local/conda-meta/pinned
+        wget -qO ac.sh https://repo.anaconda.com/archive/Anaconda3-2020.11-Linux-x86_64.sh
+        chmod +x ac.sh
+        bash ./ac.sh -b
 
         #Installing another conda package first something first seems to fix https://github.com/rapidsai/rapidsai-csp-utils/issues/4
-        conda install --channel defaults conda python=3.6 --yes
-        conda update -y -c conda-forge -c defaults --all
-        conda install -y --prefix /usr/local -c conda-forge -c defaults openssl six
+        conda install --channel defaults conda python=3.7 --yes
+        conda update -y --all
+        conda install -y -c conda-forge -c defaults openssl six
 
         if (( $RAPIDS_RESULT == $NIGHTLIES )) ;then #Newest nightly packages.  UPDATE EACH RELEASE!
         echo "Installing RAPIDS $RAPIDS_VERSION packages from the nightly release channel"
@@ -67,27 +64,36 @@ install_RAPIDS () {
             echo "Installing RAPIDS $RAPIDS_VERSION packages from the stable release channel"
             echo "Please standby, this will take a few minutes..."
             # install RAPIDS packages
-            conda install -y --prefix /usr/local \
-                -c rapidsai/label/main -c rapidsai -c nvidia -c conda-forge -c defaults \
-                python=3.6 gdal=3.0.4 cudatoolkit=$CTK_VERSION \
-                cudf=$RAPIDS_VERSION cuml cugraph cuspatial gcsfs pynvml xgboost=1.1.0dev.rapidsai$RAPIDS_VERSION \
-                dask-cudf cusignal configparser jsonpath-ng bqplot python-graphviz ruamel.yaml nodejs ipywidgets
+            conda env update -y -n base --file /content/ENV.yaml
             conda config --set pip_interop_enabled True
-            pip install dask[dataframe] distributed networkx
-            pip install gquant
-            pip install gquantlab==0.1.1
+            jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build  
+            jupyter labextension install bqplot --no-build   
             jupyter lab build
+            jupyter labextension install jupyterlab-nvdashboard
+            jupyter lab build
+            jupyter labextension install dask-labextension
+            jupyter serverextension enable dask_labextension
+            jupyter lab build
+            cd /root/
+            git clone -b v0.11.1 https://github.com/NVIDIA/NeMo.git
+            cd /root/NeMo
+            cp /root/nemo.patch /root/NeMo/
+            git apply nemo.patch && \
+            bash reinstall.sh
+            cd /root
+            git clone https://github.com/rapidsai/gQuant.git
+            cd /root/gQuant
         fi
-          
+    
         echo "Copying shared object files to /usr/lib"
         # copy .so files to /usr/lib, where Colab's Python looks for libs
-        cp /usr/local/lib/libcudf.so /usr/lib/libcudf.so
-        cp /usr/local/lib/librmm.so /usr/lib/librmm.so
-        cp /usr/local/lib/libnccl.so /usr/lib/libnccl.so
+        cp /root/anaconda3/lib/libcudf.so /usr/lib/libcudf.so
+        cp /root/anaconda3/lib/librmm.so /usr/lib/librmm.so
+        cp /root/anaconda3/lib/libnccl.so /usr/lib/libnccl.so
         echo "Copying RAPIDS compatible xgboost"	
-        cp /usr/local/lib/libxgboost.so /usr/lib/libxgboost.so
-        git clone -b develop https://github.com/rapidsai/gQuant.git
-        cd gQuant && bash download_data.sh
+        cp /root/anaconda3/lib/libxgboost.so /usr/lib/libxgboost.so
+        ln -s /usr/local/lib/python3.6/dist-packages/google \
+        /root/anaconda3/lib/python3.8/site-packages/google
     fi
 
     echo ""
