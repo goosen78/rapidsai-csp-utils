@@ -41,8 +41,6 @@ install_RAPIDS () {
         echo "python 3.7.*" > /root/conda-meta/pinned
         
         cd /root
-        ln -s /usr/local/lib/python3.6/dist-packages/google \
-        /root/lib/python3.7/site-packages/google
         export PYTHONPATH=/root
         source /root/bin/activate root
         
@@ -50,6 +48,9 @@ install_RAPIDS () {
         conda install --channel defaults conda python=3.7 --yes
         conda update -y -c conda-forge -c defaults --all
         conda install -y --prefix /root -c conda-forge -c defaults openssl six
+        
+        ln -s /usr/local/lib/python3.6/dist-packages/google \
+        /root/lib/python3.7/site-packages/google
 
         if (( $RAPIDS_RESULT == $NIGHTLIES )) ;then #Newest nightly packages.  UPDATE EACH RELEASE!
         echo "Installing RAPIDS $RAPIDS_VERSION packages from the nightly release channel"
