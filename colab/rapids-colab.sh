@@ -35,12 +35,21 @@ install_RAPIDS () {
         echo "Installing conda"
         wget -qO ac.sh https://repo.anaconda.com/archive/Anaconda3-2020.11-Linux-x86_64.sh
         chmod +x ac.sh
-        bash ./ac.sh -b
+        bash ./ac.sh -b -f -p /root
 
+        #pin python3.6
+        echo "python 3.7.*" > /root/conda-meta/pinned
+        
+        cd /root
+        ln -s /usr/local/lib/python3.6/dist-packages/google \
+        /root/lib/python3.7/site-packages/google
+        export PYTHONPATH=/root
+        source /root/bin/activate root
+        
         #Installing another conda package first something first seems to fix https://github.com/rapidsai/rapidsai-csp-utils/issues/4
         conda install --channel defaults conda python=3.7 --yes
-        conda update -y --all
-        conda install -y -c conda-forge -c defaults openssl six
+        conda update -y -c conda-forge -c defaults --all
+        conda install -y --prefix /root -c conda-forge -c defaults openssl six
 
         if (( $RAPIDS_RESULT == $NIGHTLIES )) ;then #Newest nightly packages.  UPDATE EACH RELEASE!
         echo "Installing RAPIDS $RAPIDS_VERSION packages from the nightly release channel"
@@ -64,7 +73,7 @@ install_RAPIDS () {
             echo "Installing RAPIDS $RAPIDS_VERSION packages from the stable release channel"
             echo "Please standby, this will take a few minutes..."
             # install RAPIDS packages
-            conda env update -y -n base --file /content/ENV.yaml
+            conda env update --prefix /root --file ENV.yml  --prune
             conda config --set pip_interop_enabled True
             jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build  
             jupyter labextension install bqplot --no-build   
@@ -87,13 +96,11 @@ install_RAPIDS () {
     
         echo "Copying shared object files to /usr/lib"
         # copy .so files to /usr/lib, where Colab's Python looks for libs
-        cp /root/anaconda3/lib/libcudf.so /usr/lib/libcudf.so
-        cp /root/anaconda3/lib/librmm.so /usr/lib/librmm.so
-        cp /root/anaconda3/lib/libnccl.so /usr/lib/libnccl.so
+        cp /root/lib/libcudf.so /usr/lib/libcudf.so
+        cp /root/lib/librmm.so /usr/lib/librmm.so
+        cp /root/lib/libnccl.so /usr/lib/libnccl.so
         echo "Copying RAPIDS compatible xgboost"	
-        cp /root/anaconda3/lib/libxgboost.so /usr/lib/libxgboost.so
-        ln -s /usr/local/lib/python3.6/dist-packages/google \
-        /root/anaconda3/lib/python3.8/site-packages/google
+        cp /root/lib/libxgboost.so /usr/lib/libxgboost.so
     fi
 
     echo ""
